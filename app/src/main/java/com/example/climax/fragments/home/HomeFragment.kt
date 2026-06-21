@@ -99,11 +99,9 @@ class HomeFragment : Fragment() {
                     0 -> proceedWithCurrentLocation()
                 }
             }
+            show()
         }
     }
-
-//5:37
-
 }
 
 
