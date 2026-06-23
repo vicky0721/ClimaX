@@ -2,7 +2,10 @@ package com.example.climax.utils
 
 import android.app.Application
 import com.example.climax.dependency_injection.repositoryModule
+import com.example.climax.dependency_injection.serializerModule
+import com.example.climax.dependency_injection.storageModule
 import com.example.climax.dependency_injection.viewModelModule
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
 class AppConfig : Application() {
@@ -11,7 +14,13 @@ class AppConfig : Application() {
         super.onCreate()
 
         startKoin {
-            modules(listOf(repositoryModule, viewModelModule))
+            androidContext(this@AppConfig)
+            modules(listOf(
+                repositoryModule
+                , viewModelModule,
+                serializerModule,
+                storageModule
+            ))
         }
     }
 }
