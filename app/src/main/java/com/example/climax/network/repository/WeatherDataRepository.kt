@@ -35,7 +35,7 @@ class WeatherDataRepository {
             onFailure()
         }
 
-
+    }
 
         @Suppress("DEPRECATION")
         fun updateAddressText(
@@ -60,5 +60,4 @@ class WeatherDataRepository {
             } ?: currentLocation
         }
 
-    }
 }
