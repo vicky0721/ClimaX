@@ -59,14 +59,10 @@ class HomeFragment : Fragment() {
     }
 
     private fun setWeatherData() {
-        weatherDataAdapter.setData(listOf(CurrentLocation(getCurrentData())))
+        weatherDataAdapter.setData(listOf(CurrentLocation()))
     }
 
-    private fun getCurrentData(): String {
-        val currentDate = Date()
-        val formatter = SimpleDateFormat("d MMMM yyyy", Locale.getDefault())
-        return "Today, ${formatter.format(currentDate)}"
-    }
+
 
     private fun getCurrentLocation(){
         Toast.makeText(requireContext(),"getCurrentLocation()",Toast.LENGTH_SHORT).show()

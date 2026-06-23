@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
@@ -70,4 +71,7 @@ dependencies {
 
 // Coil
     implementation("io.coil-kt:coil:2.5.0")
+
+//location
+    implementation("com.google.android.gms.play-services-location:21.0.1")
 }
