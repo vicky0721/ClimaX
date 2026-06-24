@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ClimaX</string>
+    <string name="search_loaction">Search Location</string>
 </resources>
