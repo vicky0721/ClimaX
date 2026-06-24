@@ -10,20 +10,16 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.climax.data.CurrentLocation
-import com.example.climax.data.WeatherData
 import com.example.climax.databinding.FragmentHomeBinding
-import com.example.climax.databinding.FragmentHomeBinding.inflate
 import com.example.climax.storage.SharedPreferencesManager
 import com.google.android.gms.location.LocationServices
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.climax.R
 
 class HomeFragment : Fragment() {
 
@@ -136,6 +132,7 @@ class HomeFragment : Fragment() {
             setItems(options) {_, which ->
                 when(which){
                     0 -> proceedWithCurrentLocation()
+                    1 -> startManualLocationSearch()
                 }
             }
             show()
@@ -155,6 +152,11 @@ class HomeFragment : Fragment() {
             swipeRefreshLayout.isRefreshing = false
         }
     }
+
+    private fun startManualLocationSearch(){
+        findNavController().navigate(R.id.action_home_fragment_to_location_fragment)
+    }
+
 }
 
 
