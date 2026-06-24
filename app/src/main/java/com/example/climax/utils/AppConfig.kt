@@ -1,6 +1,7 @@
 package com.example.climax.utils
 
 import android.app.Application
+import com.example.climax.dependency_injection.networkModule
 import com.example.climax.dependency_injection.repositoryModule
 import com.example.climax.dependency_injection.serializerModule
 import com.example.climax.dependency_injection.storageModule
@@ -19,7 +20,8 @@ class AppConfig : Application() {
                 repositoryModule
                 , viewModelModule,
                 serializerModule,
-                storageModule
+                storageModule,
+                networkModule
             ))
         }
     }

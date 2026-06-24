@@ -5,5 +5,5 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 val repositoryModule = module{
-    single { WeatherDataRepository() }
+    single { WeatherDataRepository(weatherAPI = get()) }
 }
