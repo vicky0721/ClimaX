@@ -9,7 +9,7 @@ import retrofit2.http.Query
 interface WeatherAPI {
 
     companion object{
-        const val BASE_URL = "https://api.weatherapi.com/v1"
+        const val BASE_URL = "https://api.weatherapi.com/v1/"
         const val API_KEY = "b95f3a0a4b0c4021b3e111947262406"
     }
 
@@ -21,4 +21,4 @@ interface WeatherAPI {
 
 }
 
-//6:28
+//8:04
