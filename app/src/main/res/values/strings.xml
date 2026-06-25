@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">ClimaX</string>
     <string name="search_loaction">Search Location</string>
+    <string name="Wind">Wind</string>
+    <string name="Humidity">Humidity\n</string>
+    <string name="Chance_of_Rain">Chance of Rain\n</string>
 </resources>
