@@ -8,9 +8,18 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.RecyclerView
+import com.example.climax.data.CurrentLocation
+import com.example.climax.data.RemoteLocation
 import com.example.climax.databinding.FragmentLocationBinding
+import com.example.climax.fragments.home.HomeFragment
+import com.example.climax.storage.SharedPreferencesManager
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class LocationFragment : Fragment() {
@@ -20,6 +29,14 @@ class LocationFragment : Fragment() {
 
 
     private val locationViewModel: LocationViewModel by viewModel()
+    private val sharedPreferencesManager: SharedPreferencesManager by inject()
+
+    private val locationsAdapter = LocationsAdapter(
+        {
+            remoteLocation -> setLocation(remoteLocation)
+        }
+    )
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,11 +51,25 @@ class LocationFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setListeners()
+        setupLocationsRecyclerView()
         setObservers()
+    }
+
+    private fun setupLocationsRecyclerView() {
+        with(binding.locationsRecyclerView) {
+            addItemDecoration(DividerItemDecoration(requireContext(), RecyclerView.VERTICAL))
+            adapter = locationsAdapter
+        }
     }
 
     private fun setListeners() {
         binding.imageClose.setOnClickListener { findNavController().popBackStack() }
+        binding.inputSearch.setStartIconOnClickListener {
+            val query = binding.inputSearch.editText?.text
+            if (query.isNullOrBlank()) return@setStartIconOnClickListener
+            hideSoftKeyboard()
+            searchLocation(query.toString())
+        }
         binding.inputSearch.editText?.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 hideSoftKeyboard()
@@ -50,6 +81,23 @@ class LocationFragment : Fragment() {
             }
 
             return@setOnEditorActionListener true
+        }
+    }
+
+    private fun setLocation(remoteLocation: RemoteLocation) {
+        with(remoteLocation) {
+            val locationText = "$name, $region, $country"
+
+            setFragmentResult(
+                requestKey = HomeFragment.REQUEST_KEY_MANUAL_LOCATION_SEARCH,
+                result = bundleOf(
+                    HomeFragment.KEY_LOCATION_TEXT to locationText,
+                    HomeFragment.KEY_LATITUDE to lat,
+                    HomeFragment.KEY_LONGITUDE to lon
+                )
+            )
+
+            findNavController().popBackStack()
         }
     }
 
@@ -66,11 +114,8 @@ class LocationFragment : Fragment() {
             }
 
             searchResultDataState.locations?.let { remoteLocations ->
-                Toast.makeText(
-                    requireContext(),
-                    "${remoteLocations.size} location(s) found",
-                    Toast.LENGTH_SHORT
-                ).show()
+               binding.locationsRecyclerView.visibility = View.VISIBLE
+                locationsAdapter.setData(remoteLocations)
             }
 
             searchResultDataState.error?.let { error ->

@@ -13,7 +13,7 @@ class LocationViewModel(private val weatherDataRepository: WeatherDataRepository
     private val _searchResult = MutableLiveData<SearchResultDataState>()
     val searchResult: LiveData<SearchResultDataState> get() = _searchResult
 
-    fun searchLocation(query: String) {fun searchLocation(query: String) {
+    fun searchLocation(query: String) {
         viewModelScope.launch {
             emitSearchResultUiState(isLoading = true)
 
@@ -29,8 +29,6 @@ class LocationViewModel(private val weatherDataRepository: WeatherDataRepository
                 )
             }
         }
-    }
-
     }
 
     private fun emitSearchResultUiState(
