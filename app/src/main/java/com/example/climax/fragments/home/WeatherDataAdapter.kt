@@ -45,14 +45,13 @@ class WeatherDataAdapter(
         }
     }
 
-    fun setForecastData(forecastList: List<Forecast>) {
-        val startIndex = INDEX_FORECAST
-        if (weatherData.size > startIndex) {
-            weatherData.subList(startIndex, weatherData.size).clear()
-        }
-        weatherData.addAll(forecastList)
-        notifyDataSetChanged()
+    fun setForecastData(forecast: List<Forecast>) {
+        weatherData.removeAll { it is Forecast }
+        notifyItemRangeRemoved(INDEX_FORECAST, weatherData.size)
+        weatherData.addAll(INDEX_FORECAST, forecast)
+        notifyItemRangeChanged(INDEX_FORECAST, weatherData.size)
     }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
