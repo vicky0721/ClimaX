@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.location.Geocoder
 import com.example.climax.data.CurrentLocation
 import com.example.climax.data.RemoteLocation
+import com.example.climax.data.RemoteWeatherData
 import com.example.climax.network.api.WeatherAPI
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -66,6 +67,11 @@ class WeatherDataRepository(private val weatherAPI: WeatherAPI) {
     suspend fun searchLocation(query: String): List<RemoteLocation>? {
         val response = weatherAPI.searchLocation(query = query)
         return if(response.isSuccessful) response.body() else null
+    }
+
+    suspend fun getWeatherData(latitude: Double, longitude: Double): RemoteWeatherData? {
+        val response = weatherAPI.getWeatherData(query = "$latitude,$longitude")
+        return if (response.isSuccessful) response.body() else null
     }
 
 }

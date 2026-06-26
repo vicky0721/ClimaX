@@ -1,6 +1,7 @@
 package com.example.climax.network.api
 
 import com.example.climax.data.RemoteLocation
+import com.example.climax.data.RemoteWeatherData
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -19,6 +20,10 @@ interface WeatherAPI {
         @Query("q") query: String
     ): Response<List<RemoteLocation>>
 
-}
+    @GET("forecast.json")
+    suspend fun getWeatherData(
+        @Query("key") key: String = API_KEY,
+        @Query("q") query: String
+    ): Response<RemoteWeatherData>
 
-//8:04
+}

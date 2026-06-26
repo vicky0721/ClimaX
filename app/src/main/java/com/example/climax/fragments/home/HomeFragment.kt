@@ -59,6 +59,8 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private var isinitialLocationSet: Boolean = false
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,savedInstanceState: Bundle?): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
@@ -70,10 +72,12 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setWeatherDataAdapter()
-        setWeatherData(sharedPreferencesManager.getCurrentLocation())
         setObservers()
+        if (!isinitialLocationSet){
+            setCurrentLoaction(sharedPreferencesManager.getCurrentLocation())
+            isinitialLocationSet = true
+        }
     }
 
     private fun setObservers() {
@@ -91,7 +95,7 @@ class HomeFragment : Fragment() {
                 currentLocationDataState.currentLocation?.let { currentLocation ->
                     hideLoading()
                     sharedPreferencesManager.saveCurrentLocation(currentLocation)
-                    setWeatherData(currentLocation)
+                    setCurrentLoaction(currentLocation)
                 }
 
                 currentLocationDataState.error?.let { error ->
@@ -103,11 +107,29 @@ class HomeFragment : Fragment() {
                     ).show()
                 }
             }
+            weatherData.observe(viewLifecycleOwner) {
+                val weatherDataState = it.getContentIfNotHandled() ?: return@observe
+
+                binding.swipeRefreshLayout.isRefreshing = weatherDataState.isLoading
+
+                weatherDataState.currentWeather?.let { currentWeather ->
+                   weatherDataAdapter.setCurrentWeather(currentWeather)
+                }
+
+                weatherDataState.error?.let { error ->
+                    Toast.makeText(
+                        requireContext(),
+                        error,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
     }
 
-    private fun setWeatherData(currentLocation: CurrentLocation?= null) {
-        weatherDataAdapter.setData(listOf(currentLocation ?: CurrentLocation()))
+    private fun setCurrentLoaction(currentLocation: CurrentLocation?= null) {
+        weatherDataAdapter.setCurrentLocation(currentLocation ?: CurrentLocation())
+        currentLocation?.let{ getWeatherData(it)}
     }
 
 
@@ -177,12 +199,21 @@ class HomeFragment : Fragment() {
                 longitude = bundle.getDouble(KEY_LONGITUDE)
             )
             sharedPreferencesManager.saveCurrentLocation(currentLocation)
-            setWeatherData(currentLocation)
+            setCurrentLoaction(currentLocation)
         }
     }
 
     private fun stopListeningManualLocationSelection(){
         clearFragmentResultListener(REQUEST_KEY_MANUAL_LOCATION_SEARCH)
+    }
+
+    private fun getWeatherData(currentLocation: CurrentLocation) {
+        if (currentLocation.latitude != null && currentLocation.longitude != null) {
+            homeViewModel.getWeatherData(
+                latitude = currentLocation.latitude,
+                longitude = currentLocation.longitude
+            )
+        }
     }
 
 }
