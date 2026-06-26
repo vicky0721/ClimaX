@@ -7,17 +7,19 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.climax.data.CurrentLocation
 import com.example.climax.data.CurrentWeather
+import com.example.climax.data.Forecast
 import com.example.climax.data.WeatherData
 import com.example.climax.databinding.ItemContainerCurrentLocationBinding
 import com.example.climax.databinding.ItemContainerCurrentWeatherBinding
+import com.example.climax.databinding.ItemContainerForecastBinding
 
 class WeatherDataAdapter(
     private val onLocationClicked: () -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private companion object{
-        const val INDEX_CURRENT_LOCATION =0
-        const val INDEX_CURRENT_WEATHER =1
+    private companion object {
+        const val INDEX_CURRENT_LOCATION = 0
+        const val INDEX_CURRENT_WEATHER = 1
         const val INDEX_FORECAST = 2
     }
 
@@ -34,7 +36,7 @@ class WeatherDataAdapter(
     }
 
     fun setCurrentWeather(currentWeather: CurrentWeather) {
-        if (weatherData.getOrNull(INDEX_CURRENT_WEATHER) != null) {
+        if (weatherData.size > INDEX_CURRENT_WEATHER) {
             weatherData[INDEX_CURRENT_WEATHER] = currentWeather
             notifyItemChanged(INDEX_CURRENT_WEATHER)
         } else {
@@ -43,27 +45,48 @@ class WeatherDataAdapter(
         }
     }
 
+    fun setForecastData(forecastList: List<Forecast>) {
+        val startIndex = INDEX_FORECAST
+        if (weatherData.size > startIndex) {
+            weatherData.subList(startIndex, weatherData.size).clear()
+        }
+        weatherData.addAll(forecastList)
+        notifyDataSetChanged()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return when(viewType){
-            INDEX_CURRENT_LOCATION -> CurrentLocationViewHolder( ItemContainerCurrentLocationBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
+        return when (viewType) {
+            INDEX_CURRENT_LOCATION -> CurrentLocationViewHolder(
+                ItemContainerCurrentLocationBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
             )
+
+            INDEX_FORECAST -> ForecastViewHolder(
+                ItemContainerForecastBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
             )
+
             else -> CurrentWeatherViewHolder(
                 ItemContainerCurrentWeatherBinding.inflate(
-                    LayoutInflater.from(parent.context),parent,false
+                    LayoutInflater.from(parent.context), parent, false
                 )
             )
         }
     }
 
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder,position: Int){
-        when(holder){
-            is CurrentLocationViewHolder ->  holder.bind(weatherData[position] as CurrentLocation)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is CurrentLocationViewHolder -> holder.bind(weatherData[position] as CurrentLocation)
             is CurrentWeatherViewHolder -> holder.bind(weatherData[position] as CurrentWeather)
+            is ForecastViewHolder -> holder.bind(weatherData[position] as Forecast)
+
         }
 
     }
@@ -76,8 +99,10 @@ class WeatherDataAdapter(
         return when (weatherData[position]) {
             is CurrentLocation -> INDEX_CURRENT_LOCATION
             is CurrentWeather -> INDEX_CURRENT_WEATHER
+            is Forecast -> INDEX_FORECAST
         }
     }
+
     inner class CurrentLocationViewHolder(
         private val binding: ItemContainerCurrentLocationBinding
     ) : RecyclerView.ViewHolder(binding.root) {
@@ -105,6 +130,24 @@ class WeatherDataAdapter(
                 textWind.text = String.format("%s km/h", currentWeather.wind)
                 textHumidity.text = String.format("%s%%", currentWeather.humidity)
                 textChanceOfRain.text = String.format("%s%%", currentWeather.chanceOfRain)
+            }
+        }
+    }
+
+    inner class ForecastViewHolder(
+        private val binding: ItemContainerForecastBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(forecast: Forecast) {
+            with(binding) {
+                textTime.text = forecast.time
+                textTemperature.text = String.format("%s\u00B0C", forecast.temperature)
+                textFeelsLikeTemperature.text =
+                    String.format("%s\u00B0C", forecast.feelsLikeTemperature)
+
+                imageIcon.load("https:${forecast.icon}") {
+                    crossfade(true)
+                }
             }
         }
     }

@@ -75,7 +75,7 @@ class HomeFragment : Fragment() {
         setWeatherDataAdapter()
         setObservers()
         if (!isinitialLocationSet){
-            setCurrentLoaction(sharedPreferencesManager.getCurrentLocation())
+            setCurrentLocation(sharedPreferencesManager.getCurrentLocation())
             isinitialLocationSet = true
         }
     }
@@ -95,7 +95,7 @@ class HomeFragment : Fragment() {
                 currentLocationDataState.currentLocation?.let { currentLocation ->
                     hideLoading()
                     sharedPreferencesManager.saveCurrentLocation(currentLocation)
-                    setCurrentLoaction(currentLocation)
+                    setCurrentLocation(currentLocation)
                 }
 
                 currentLocationDataState.error?.let { error ->
@@ -116,6 +116,10 @@ class HomeFragment : Fragment() {
                    weatherDataAdapter.setCurrentWeather(currentWeather)
                 }
 
+                weatherDataState.forecast?.let { forecast ->
+                    weatherDataAdapter.setForecastData(forecast)
+                }
+
                 weatherDataState.error?.let { error ->
                     Toast.makeText(
                         requireContext(),
@@ -127,7 +131,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun setCurrentLoaction(currentLocation: CurrentLocation?= null) {
+    private fun setCurrentLocation(currentLocation: CurrentLocation?= null) {
         weatherDataAdapter.setCurrentLocation(currentLocation ?: CurrentLocation())
         currentLocation?.let{ getWeatherData(it)}
     }
@@ -199,7 +203,7 @@ class HomeFragment : Fragment() {
                 longitude = bundle.getDouble(KEY_LONGITUDE)
             )
             sharedPreferencesManager.saveCurrentLocation(currentLocation)
-            setCurrentLoaction(currentLocation)
+            setCurrentLocation(currentLocation)
         }
     }
 
