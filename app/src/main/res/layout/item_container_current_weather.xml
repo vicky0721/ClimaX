@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/_16sdp"
     android:layout_marginBottom="@dimen/_16sdp"
-    app:cardBackgroundColor="@color/white"
+    app:cardBackgroundColor="@color/white_90"
     app:cardCornerRadius="@dimen/_4sdp"
     app:cardElevation="0dp"
     app:strokeColor="@color/sonic_silver"
@@ -24,6 +24,7 @@
             android:layout_height="wrap_content"
             android:minHeight="@dimen/_80sdp"
             android:adjustViewBounds="true"
+            android:tint="@color/raisin_black"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -51,7 +52,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/_16sdp"
             android:layout_marginEnd="@dimen/_8sdp"
-            app:cardBackgroundColor="@color/cultured"
+            app:cardBackgroundColor="@color/cultured_90"
             app:cardCornerRadius="@dimen/_4sdp"
             app:cardElevation="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -72,7 +73,8 @@
                 <androidx.appcompat.widget.AppCompatImageView
                     android:layout_width="@dimen/_22sdp"
                     android:layout_height="@dimen/_22sdp"
-                    android:src="@drawable/air" />
+                    android:src="@drawable/air"
+                    android:tint="@color/raisin_black" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"
@@ -101,7 +103,7 @@
             android:layout_marginStart="@dimen/_8ssp"
             android:layout_marginTop="@dimen/_16sdp"
             android:layout_marginEnd="@dimen/_8sdp"
-            app:cardBackgroundColor="@color/cultured"
+            app:cardBackgroundColor="@color/cultured_90"
             app:cardCornerRadius="@dimen/_4sdp"
             app:cardElevation="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -121,7 +123,8 @@
                 <androidx.appcompat.widget.AppCompatImageView
                     android:layout_width="@dimen/_22sdp"
                     android:layout_height="@dimen/_22sdp"
-                    android:src="@drawable/humidity" />
+                    android:src="@drawable/humidity"
+                    android:tint="@color/raisin_black" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"
@@ -150,7 +153,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/_8ssp"
             android:layout_marginTop="@dimen/_16sdp"
-            app:cardBackgroundColor="@color/cultured"
+            app:cardBackgroundColor="@color/cultured_90"
             app:cardCornerRadius="@dimen/_4sdp"
             app:cardElevation="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -170,7 +173,8 @@
                 <androidx.appcompat.widget.AppCompatImageView
                     android:layout_width="@dimen/_22sdp"
                     android:layout_height="@dimen/_22sdp"
-                    android:src="@drawable/rainy" />
+                    android:src="@drawable/cloudrain"
+                    android:tint="@color/raisin_black" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"

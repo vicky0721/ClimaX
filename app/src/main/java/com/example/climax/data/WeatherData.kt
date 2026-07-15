@@ -16,6 +16,7 @@ data class CurrentLocation(
 
 data class CurrentWeather(
     val icon: String,
+    val condition: String,
     val temperature: Float,
     val wind: Float,
     val humidity: Int,

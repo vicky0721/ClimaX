@@ -121,7 +121,11 @@ class HomeFragment : Fragment() {
                 binding.swipeRefreshLayout.isRefreshing = weatherDataState.isLoading
 
                 weatherDataState.currentWeather?.let { currentWeather ->
-                   weatherDataAdapter.setCurrentWeather(currentWeather)
+
+                    weatherDataAdapter.setCurrentWeather(currentWeather)
+
+                    updateBackground(currentWeather.condition)
+
                 }
 
                 weatherDataState.forecast?.let { forecast ->
@@ -228,6 +232,39 @@ class HomeFragment : Fragment() {
                 longitude = currentLocation.longitude
             )
         }
+    }
+
+    private fun updateBackground(condition: String) {
+
+        val background = when {
+
+            condition.contains("Sunny", true) ||
+                    condition.contains("Clear", true) ->
+                R.drawable.sunnybg
+
+
+            condition.contains("Cloud", true) ||
+                    condition.contains("Overcast", true) ->
+                R.drawable.cloudybg
+
+
+            condition.contains("Rain", true) ||
+                    condition.contains("Drizzle", true) ||
+                    condition.contains("Thunder", true) ->
+                R.drawable.rainbg
+
+
+            condition.contains("Snow", true) ||
+                    condition.contains("Sleet", true) ->
+                R.drawable.snowbg
+
+
+            else ->
+                R.drawable.cloudybg
+        }
+
+
+        binding.backgroundImage.setImageResource(background)
     }
 
 }

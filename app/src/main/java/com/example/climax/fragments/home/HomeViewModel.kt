@@ -106,11 +106,11 @@ class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : 
                 emitWeatherDataUiState(
                     currentWeather = CurrentWeather(
                         icon = weatherData.current.condition.icon,
+                        condition = weatherData.current.condition.text,
                         temperature = weatherData.current.temperature,
                         wind = weatherData.current.wind,
                         humidity = weatherData.current.humidity,
-                        chanceOfRain = weatherData.forecast.forecastDay.first().day.chanceOfRain
-                    ),
+                        chanceOfRain = weatherData.forecast.forecastDay.first().day.chanceOfRain),
                     forecast = weatherData.forecast.forecastDay.first().hour.map {
                         Forecast(
                             time = getForecastTime(it.time),
@@ -146,6 +146,5 @@ class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : 
         val date = pattern.parse(dateTime) ?: return dateTime
         return SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
     }
-        //endregion
-}
 
+}

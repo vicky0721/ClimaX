@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_marginTop="@dimen/_4sdp"
     android:layout_marginBottom="@dimen/_4sdp"
-    app:cardBackgroundColor="@color/white"
+    app:cardBackgroundColor="@color/white_90"
     app:cardCornerRadius="@dimen/_4sdp"
     app:cardElevation="0dp"
     app:strokeColor="@color/sonic_silver"
@@ -34,6 +34,7 @@
             android:id="@+id/imageIcon"
             android:layout_width="@dimen/_24sdp"
             android:layout_height="@dimen/_24sdp"
+            android:tint="@color/raisin_black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
