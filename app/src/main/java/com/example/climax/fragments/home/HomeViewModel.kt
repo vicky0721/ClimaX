@@ -10,13 +10,17 @@ import com.example.climax.data.CurrentWeather
 import com.example.climax.data.Forecast
 import com.example.climax.data.LiveDataEvent
 import com.example.climax.network.repository.WeatherDataRepository
+import com.example.climax.storage.SharedPreferencesManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 
-class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : ViewModel(){
+class HomeViewModel(
+    private val weatherDataRepository: WeatherDataRepository,
+    private val sharedPreferencesManager: SharedPreferencesManager
+) : ViewModel(){
 
     //region Current Location
 
@@ -103,6 +107,7 @@ class HomeViewModel(private val weatherDataRepository: WeatherDataRepository) : 
             emitWeatherDataUiState(isLoading = true)
 
             weatherDataRepository.getWeatherData(latitude, longitude)?.let { weatherData ->
+                sharedPreferencesManager.saveWeatherData(weatherData)
                 emitWeatherDataUiState(
                     currentWeather = CurrentWeather(
                         icon = weatherData.current.condition.icon,

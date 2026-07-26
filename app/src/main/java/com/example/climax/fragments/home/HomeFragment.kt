@@ -125,7 +125,12 @@ class HomeFragment : Fragment() {
                     weatherDataAdapter.setCurrentWeather(currentWeather)
 
                     updateBackground(currentWeather.condition)
-
+                    
+                    // Trigger widget update
+                    android.content.Intent(requireContext(), com.example.climax.widget.ClimaXWidgetReceiver::class.java).apply {
+                        action = "androidx.glance.appwidget.action.UPDATE_ALL"
+                        requireContext().sendBroadcast(this)
+                    }
                 }
 
                 weatherDataState.forecast?.let { forecast ->
