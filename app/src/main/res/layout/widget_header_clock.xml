@@ -1,58 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:gravity="start"
-    android:padding="15dp">
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="3dp"
+    android:paddingBottom="4dp">
 
-    <!-- Time Row -->
-    <LinearLayout
+    <!-- Time Clock (Primary anchor) -->
+    <TextClock
+        android:id="@+id/timeClock"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="bottom">
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:format12Hour="hh:mm"
+        android:format24Hour="HH:mm"
+        android:textColor="@android:color/white"
+        android:textSize="44sp"
+        android:fontFamily="sans-serif-light"
+        android:includeFontPadding="false" />
 
-        <!-- 04:46 -->
-        <TextClock
-            android:id="@+id/timeClock"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:format12Hour="hh:mm"
-            android:format24Hour="HH:mm"
-            android:textColor="@android:color/white"
-            android:textSize="30sp"
-            android:fontFamily="sans-serif"
-            android:includeFontPadding="false" />
+    <!-- AM/PM indicator -->
+    <TextClock
+        android:id="@+id/amPmClock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/timeClock"
+        android:layout_alignBaseline="@id/timeClock"
+        android:layout_marginStart="4dp"
+        android:format12Hour="a"
+        android:format24Hour=""
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:fontFamily="sans-serif-light"
+        android:textAllCaps="true"
+        android:includeFontPadding="false" />
 
-        <!-- PM -->
-        <TextClock
-            android:id="@+id/amPmClock"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:format12Hour="a"
-            android:format24Hour=""
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:fontFamily="sans-serif"
-            android:textAllCaps="true"
-            android:includeFontPadding="false"
-            android:layout_marginStart="4dp" />
+    <!-- Place Name (Aligned with Time) -->
+    <TextView
+        android:id="@+id/textPlace"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBaseline="@id/timeClock"
+        android:textColor="@android:color/white"
+        android:textSize="22sp"
+        android:fontFamily="sans-serif"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
-    </LinearLayout>
-
-    <!-- Date Row -->
-    <!-- Sun  Sep 20 -->
+    <!-- Date Clock (Anchor for second row) -->
     <TextClock
         android:id="@+id/dateClock"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:format12Hour="EEE  MMM d"
-        android:format24Hour="EEE  MMM d"
+        android:layout_below="@id/timeClock"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="-2dp"
+        android:format12Hour="EEE, MMM d"
+        android:format24Hour="EEE, MMM d"
         android:textColor="@android:color/white"
         android:textSize="20sp"
         android:fontFamily="sans-serif"
-        android:includeFontPadding="false"
-        android:layout_marginTop="-4dp" />
+        android:includeFontPadding="false" />
 
-</LinearLayout>
+    <!-- State and Country (Aligned with Date) -->
+    <TextView
+        android:id="@+id/textStateCountry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBaseline="@id/dateClock"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:fontFamily="sans-serif"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+</RelativeLayout>

@@ -60,24 +60,34 @@ class ClimaXWidget : GlanceAppWidget(), KoinComponent {
     private fun WidgetContent(context: Context, weatherData: RemoteWeatherData?) {
         // Safely extract hours
         val hoursToShow = weatherData?.let { extractNextFiveHours(it) } ?: emptyList()
-        val currentCondition = weatherData?.current?.condition?.text ?: "Clear"
-        val bgColor = getBackgroundColor(currentCondition)
 
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(bgColor)
+                .background(Color.Transparent)
                 .cornerRadius(20.dp)
-                .padding(bottom = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.Top
         ) {
             // 1. Clock & Date Header (XML)
             Box(
-                modifier = GlanceModifier.fillMaxWidth().padding(top = 4.dp),
+                modifier = GlanceModifier.fillMaxWidth().padding(top = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                AndroidRemoteViews(RemoteViews(context.packageName, R.layout.widget_header_clock))
+                val remoteViews = RemoteViews(context.packageName, R.layout.widget_header_clock).apply {
+                    val locationStr = sharedPreferencesManager.getCurrentLocation()?.location ?: "Unknown, Location"
+                    val parts = locationStr.split(", ")
+                    if (parts.size >= 1) {
+                        setTextViewText(R.id.textPlace, parts[0])
+                    }
+                    if (parts.size >= 2) {
+                        setTextViewText(R.id.textStateCountry, parts.drop(1).joinToString(", "))
+                    } else {
+                        setTextViewText(R.id.textStateCountry, "")
+                    }
+                }
+                AndroidRemoteViews(remoteViews)
             }
 
             Spacer(modifier = GlanceModifier.size(4.dp))
@@ -85,14 +95,15 @@ class ClimaXWidget : GlanceAppWidget(), KoinComponent {
             // 2. Weather Forecast Section
             if (hoursToShow.isNotEmpty()) {
                 Row(
-                    modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = GlanceModifier.fillMaxWidth().padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    hoursToShow.forEachIndexed { index, hour ->
-                        ForecastItem(hour, isNow = index == 0)
-                        if (index < hoursToShow.size - 1) {
-                            Spacer(modifier = GlanceModifier.width(8.dp))
+                    hoursToShow.forEach { hour ->
+                        Box(
+                            modifier = GlanceModifier.defaultWeight(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ForecastItem(hour, isNow = hoursToShow.indexOf(hour) == 0)
                         }
                     }
                 }
@@ -119,29 +130,28 @@ class ClimaXWidget : GlanceAppWidget(), KoinComponent {
     private fun ForecastItem(hour: ForecastHourRemote, isNow: Boolean) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = GlanceModifier.width(50.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = if (isNow) "Now" else formatHour(hour.time),
                 style = TextStyle(
                     color = ColorProvider(Color.White),
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Normal
                 )
             )
-            Spacer(modifier = GlanceModifier.size(4.dp))
+            Spacer(modifier = GlanceModifier.size(2.dp))
             Image(
                 provider = ImageProvider(getWeatherIcon(hour.condition.text, hour.condition.icon)),
                 contentDescription = hour.condition.text,
-                modifier = GlanceModifier.size(28.dp)
+                modifier = GlanceModifier.size(30.dp)
             )
-            Spacer(modifier = GlanceModifier.size(4.dp))
+            Spacer(modifier = GlanceModifier.size(2.dp))
             Text(
                 text = "${hour.temperature.toInt()}°",
                 style = TextStyle(
                     color = ColorProvider(Color.White),
-                    fontSize = 16.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold
                 )
             )
@@ -149,25 +159,39 @@ class ClimaXWidget : GlanceAppWidget(), KoinComponent {
     }
 
     private fun extractNextFiveHours(weatherData: RemoteWeatherData): List<ForecastHourRemote> {
-        val allHours = weatherData.forecast.forecastDay.firstOrNull()?.hour ?: return emptyList()
-        val calendar = Calendar.getInstance()
-        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val allHours = weatherData.forecast.forecastDay.flatMap { it.hour }
+        if (allHours.isEmpty()) return emptyList()
+
+        val now = Calendar.getInstance()
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
         // Find current and future hours
         val filtered = allHours.filter {
             try {
                 val date = sdf.parse(it.time)
-                val hourCal = Calendar.getInstance().apply { time = date!! }
-                // Only show hours that are greater than or equal to current system hour
-                hourCal.get(Calendar.HOUR_OF_DAY) >= currentHour
+                val itemCal = Calendar.getInstance().apply { time = date!! }
+                
+                // Compare hour by hour. We want the item if it's today and >= current hour, 
+                // or if it's any day after today.
+                if (itemCal.get(Calendar.YEAR) > now.get(Calendar.YEAR)) true
+                else if (itemCal.get(Calendar.YEAR) < now.get(Calendar.YEAR)) false
+                else {
+                    if (itemCal.get(Calendar.DAY_OF_YEAR) > now.get(Calendar.DAY_OF_YEAR)) true
+                    else if (itemCal.get(Calendar.DAY_OF_YEAR) < now.get(Calendar.DAY_OF_YEAR)) false
+                    else itemCal.get(Calendar.HOUR_OF_DAY) >= now.get(Calendar.HOUR_OF_DAY)
+                }
             } catch (e: Exception) {
                 false
             }
         }
 
-        // Fallback: If filtered list is empty (e.g. at 11:59 PM), just show the first 5 available hours
-        return if (filtered.isNotEmpty()) filtered.take(5) else allHours.take(5)
+        // Return exactly 5 hours if available
+        return if (filtered.size >= 5) {
+            filtered.take(5)
+        } else {
+            // Fallback: if we have less than 5 future hours, just take the first 5 available from the whole list
+            allHours.take(5)
+        }
     }
 
     private fun formatHour(time: String): String {
@@ -190,18 +214,6 @@ class ClimaXWidget : GlanceAppWidget(), KoinComponent {
             lc.contains("cloud") || lc.contains("overcast") || lc.contains("mist") || lc.contains("fog") -> R.drawable.ic_cloud_white
             lc.contains("snow") || lc.contains("sleet") || lc.contains("ice") -> R.drawable.ic_snow_white
             else -> if (isNight) R.drawable.ic_moon_yellow else R.drawable.ic_sun_yellow
-        }
-    }
-
-    private fun getBackgroundColor(condition: String): Color {
-        val lc = condition.lowercase()
-        return when {
-            lc.contains("sunny") || lc.contains("clear") -> Color(0xFF4A90E2)
-            lc.contains("thunder") || lc.contains("storm") -> Color(0xFF1A237E)
-            lc.contains("rain") || lc.contains("drizzle") -> Color(0xFF37474F)
-            lc.contains("cloud") || lc.contains("overcast") -> Color(0xFF546E7A)
-            lc.contains("snow") -> Color(0xFF78909C)
-            else -> Color(0xFF23224B)
         }
     }
 }
