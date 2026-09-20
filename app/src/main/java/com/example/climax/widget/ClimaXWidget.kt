@@ -48,7 +48,21 @@ class ClimaXWidget : GlanceAppWidget(), KoinComponent {
     private val weatherDataRepository: WeatherDataRepository by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        // Read current cache
+        // ACTIVE REFRESH: Try to get fresh weather data every time the widget updates (every hour)
+        val location = sharedPreferencesManager.getCurrentLocation()
+        if (location?.latitude != null && location.longitude != null) {
+            try {
+                withContext(Dispatchers.IO) {
+                    val freshData = weatherDataRepository.getWeatherData(location.latitude, location.longitude)
+                    if (freshData != null) {
+                        sharedPreferencesManager.saveWeatherData(freshData)
+                    }
+                }
+            } catch (e: Exception) {
+                // Fallback to cache if network fails
+            }
+        }
+
         val weatherData = sharedPreferencesManager.getWeatherData()
 
         provideContent {
@@ -159,20 +173,20 @@ class ClimaXWidget : GlanceAppWidget(), KoinComponent {
     }
 
     private fun extractNextFiveHours(weatherData: RemoteWeatherData): List<ForecastHourRemote> {
+        // 1. Flatten all available hours (Today + Tomorrow if available)
         val allHours = weatherData.forecast.forecastDay.flatMap { it.hour }
         if (allHours.isEmpty()) return emptyList()
 
         val now = Calendar.getInstance()
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
-        // Find current and future hours
+        // 2. Find the first hour that is >= the current system hour
         val filtered = allHours.filter {
             try {
                 val date = sdf.parse(it.time)
                 val itemCal = Calendar.getInstance().apply { time = date!! }
                 
-                // Compare hour by hour. We want the item if it's today and >= current hour, 
-                // or if it's any day after today.
+                // Keep if it's the future (different day) or if it's today and same/future hour
                 if (itemCal.get(Calendar.YEAR) > now.get(Calendar.YEAR)) true
                 else if (itemCal.get(Calendar.YEAR) < now.get(Calendar.YEAR)) false
                 else {
@@ -185,19 +199,20 @@ class ClimaXWidget : GlanceAppWidget(), KoinComponent {
             }
         }
 
-        // Return exactly 5 hours if available
+        // 3. Always return exactly 5 hours from the starting point
         return if (filtered.size >= 5) {
             filtered.take(5)
         } else {
-            // Fallback: if we have less than 5 future hours, just take the first 5 available from the whole list
-            allHours.take(5)
+            // Fallback: if we somehow have fewer than 5 items left in the entire data set, 
+            // just return the last 5 available to avoid a sparse UI.
+            if (allHours.size >= 5) allHours.takeLast(5) else allHours
         }
     }
 
     private fun formatHour(time: String): String {
         return try {
             val date = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).parse(time)
-            SimpleDateFormat("h:mm a", Locale.getDefault()).format(date!!).lowercase()
+            SimpleDateFormat("h:00 a", Locale.getDefault()).format(date!!).lowercase()
         } catch (e: Exception) {
             "..."
         }
