@@ -8,4 +8,5 @@
     <color name="sonic_silver">#333333</color>
     <color name="transparent">#00F5F5F8</color>
     <color name="raisin_black">#212121</color>
+    <color name="widget_background">#23224B</color>
 </resources>

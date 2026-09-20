@@ -17,12 +17,13 @@
             android:id="@+id/textClockTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:format12Hour="hh:mm a"
+            android:format12Hour="hh:mma"
             android:format24Hour="HH:mm"
             android:textColor="@color/white"
-            android:textSize="@dimen/_28ssp"
+            android:textSize="@dimen/_32ssp"
             android:textStyle="bold"
-            tools:text="12:30 PM" />
+            android:fontFamily="sans-serif"
+            tools:text="12:30pm" />
 
         <TextClock
             android:id="@+id/textClockDate"
@@ -32,6 +33,8 @@
             android:format24Hour="EEE, MMM d"
             android:textColor="@color/white"
             android:textSize="@dimen/_14ssp"
+            android:fontFamily="sans-serif"
+            android:textAllCaps="true"
             tools:text="Mon, Oct 25" />
     </LinearLayout>
 

@@ -17,16 +17,20 @@ class LocationViewModel(private val weatherDataRepository: WeatherDataRepository
         viewModelScope.launch {
             emitSearchResultUiState(isLoading = true)
 
-            val searchResult = weatherDataRepository.searchLocation(query)
+            try {
+                val searchResult = weatherDataRepository.searchLocation(query)
 
-            if (searchResult.isNullOrEmpty()) {
-                emitSearchResultUiState(
-                    error = "Location not found, please try again."
-                )
-            } else {
-                emitSearchResultUiState(
-                    locations = searchResult
-                )
+                if (searchResult.isNullOrEmpty()) {
+                    emitSearchResultUiState(
+                        error = "Location not found, please try again."
+                    )
+                } else {
+                    emitSearchResultUiState(
+                        locations = searchResult
+                    )
+                }
+            } catch (e: Exception) {
+                emitSearchResultUiState(error = e.message ?: "An unknown error occurred")
             }
         }
     }

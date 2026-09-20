@@ -12,7 +12,9 @@ import com.example.climax.data.LiveDataEvent
 import com.example.climax.network.repository.WeatherDataRepository
 import com.example.climax.storage.SharedPreferencesManager
 import com.google.android.gms.location.FusedLocationProviderClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -58,12 +60,12 @@ class HomeViewModel(
         viewModelScope.launch {
 
             runCatching {
-
-                weatherDataRepository.updateAddressText(
-                    currentLocation,
-                    geocoder
-                )
-
+                withContext(Dispatchers.IO) {
+                    weatherDataRepository.updateAddressText(
+                        currentLocation,
+                        geocoder
+                    )
+                }
             }.onSuccess { location ->
 
                 emitCurrentLocationUiState(
@@ -106,26 +108,31 @@ class HomeViewModel(
         viewModelScope.launch {
             emitWeatherDataUiState(isLoading = true)
 
-            weatherDataRepository.getWeatherData(latitude, longitude)?.let { weatherData ->
-                sharedPreferencesManager.saveWeatherData(weatherData)
-                emitWeatherDataUiState(
-                    currentWeather = CurrentWeather(
-                        icon = weatherData.current.condition.icon,
-                        condition = weatherData.current.condition.text,
-                        temperature = weatherData.current.temperature,
-                        wind = weatherData.current.wind,
-                        humidity = weatherData.current.humidity,
-                        chanceOfRain = weatherData.forecast.forecastDay.first().day.chanceOfRain),
-                    forecast = weatherData.forecast.forecastDay.first().hour.map {
-                        Forecast(
-                            time = getForecastTime(it.time),
-                            temperature = it.temperature,
-                            feelsLikeTemperature = it.feelsLikeTemperature,
-                            icon = it.condition.icon
-                        )
-                    }
-                )
-            } ?: emitWeatherDataUiState(error = "Unable to fetch weather data")
+            try {
+                weatherDataRepository.getWeatherData(latitude, longitude)?.let { weatherData ->
+                    sharedPreferencesManager.saveWeatherData(weatherData)
+                    emitWeatherDataUiState(
+                        currentWeather = CurrentWeather(
+                            icon = weatherData.current.condition.icon,
+                            condition = weatherData.current.condition.text,
+                            temperature = weatherData.current.temperature,
+                            wind = weatherData.current.wind,
+                            humidity = weatherData.current.humidity,
+                            chanceOfRain = weatherData.forecast.forecastDay.first().day.chanceOfRain
+                        ),
+                        forecast = weatherData.forecast.forecastDay.first().hour.map {
+                            Forecast(
+                                time = getForecastTime(it.time),
+                                temperature = it.temperature,
+                                feelsLikeTemperature = it.feelsLikeTemperature,
+                                icon = it.condition.icon
+                            )
+                        }
+                    )
+                } ?: emitWeatherDataUiState(error = "Unable to fetch weather data")
+            } catch (e: Exception) {
+                emitWeatherDataUiState(error = e.message ?: "An unknown error occurred")
+            }
         }
     }
 

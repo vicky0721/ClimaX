@@ -1,9 +1,15 @@
 package com.example.climax.fragments.home
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,11 +20,13 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResultListener
 import androidx.fragment.app.setFragmentResultListener
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.climax.data.CurrentLocation
 import com.example.climax.databinding.FragmentHomeBinding
 import com.example.climax.storage.SharedPreferencesManager
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.example.climax.R
@@ -84,7 +92,54 @@ class HomeFragment : Fragment() {
 
     private fun setListeners(){
         binding.swipeRefreshLayout.setOnRefreshListener {
-            setCurrentLocation(sharedPreferencesManager.getCurrentLocation())
+            if (isInternetConnected()) {
+                setCurrentLocation(sharedPreferencesManager.getCurrentLocation())
+            } else {
+                binding.swipeRefreshLayout.isRefreshing = false
+                showNoInternetDialog()
+            }
+        }
+    }
+
+    private fun isInternetConnected(): Boolean {
+        val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return when {
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+            else -> false
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun showNoInternetDialog() {
+        AlertDialog.Builder(requireContext()).apply {
+            setTitle("No Internet Connection")
+            setMessage("Please turn on your internet connection to get the latest weather data.")
+            setPositiveButton("Settings") { _, _ ->
+                startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+            }
+            setNegativeButton("Cancel", null)
+            show()
+        }
+    }
+
+    private fun showLocationDisabledDialog() {
+        AlertDialog.Builder(requireContext()).apply {
+            setTitle("Location Services Disabled")
+            setMessage("Please enable location services to get your current location.")
+            setPositiveButton("Settings") { _, _ ->
+                startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            }
+            setNegativeButton("Cancel", null)
+            show()
         }
     }
 
@@ -126,10 +181,13 @@ class HomeFragment : Fragment() {
 
                     updateBackground(currentWeather.condition)
                     
-                    // Trigger widget update
-                    android.content.Intent(requireContext(), com.example.climax.widget.ClimaXWidgetReceiver::class.java).apply {
-                        action = "androidx.glance.appwidget.action.UPDATE_ALL"
-                        requireContext().sendBroadcast(this)
+                    // Force widget update using Glance Manager
+                    lifecycleScope.launch {
+                        androidx.glance.appwidget.GlanceAppWidgetManager(requireContext())
+                            .getGlanceIds(com.example.climax.widget.ClimaXWidget::class.java)
+                            .forEach { glanceId ->
+                                com.example.climax.widget.ClimaXWidget().update(requireContext(), glanceId)
+                            }
                     }
                 }
 
@@ -170,6 +228,14 @@ class HomeFragment : Fragment() {
     }
 
     private fun proceedWithCurrentLocation(){
+        if (!isInternetConnected()) {
+            showNoInternetDialog()
+            return
+        }
+        if (!isLocationEnabled()) {
+            showLocationDisabledDialog()
+            return
+        }
         if(isLocationPermissionGranted()){
             getCurrentLocation()
         } else{
@@ -232,10 +298,14 @@ class HomeFragment : Fragment() {
 
     private fun getWeatherData(currentLocation: CurrentLocation) {
         if (currentLocation.latitude != null && currentLocation.longitude != null) {
-            homeViewModel.getWeatherData(
-                latitude = currentLocation.latitude,
-                longitude = currentLocation.longitude
-            )
+            if (isInternetConnected()) {
+                homeViewModel.getWeatherData(
+                    latitude = currentLocation.latitude,
+                    longitude = currentLocation.longitude
+                )
+            } else {
+                showNoInternetDialog()
+            }
         }
     }
 
