@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ClimaX – Weather Forecast Application | Technical Interview Preparation Guide</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            color: #2D3748;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #FFFFFF;
+        }
+        .header-container {
+            border-bottom: 3px solid #3182CE;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        h1 {
+            color: #1A365D;
+            font-size: 24pt;
+            margin: 0 0 8px 0;
+        }
+        .subtitle {
+            color: #4A5568;
+            font-size: 12pt;
+            font-weight: 600;
+        }
+        .meta-info {
+            color: #718096;
+            font-size: 9pt;
+            margin-top: 5px;
+        }
+        .category-title {
+            background-color: #2B6CB0;
+            color: #FFFFFF;
+            padding: 8px 12px;
+            font-size: 13pt;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+        .question-card {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .question-header {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #2C5282;
+            margin-bottom: 6px;
+        }
+        .answer-box {
+            background-color: #F7FAFC;
+            border-left: 4px solid #3182CE;
+            padding: 10px 14px;
+            font-size: 10pt;
+            color: #2D3748;
+            border-radius: 0 4px 4px 0;
+        }
+        .answer-box ul {
+            margin: 6px 0 6px 18px;
+            padding: 0;
+        }
+        .answer-box li {
+            margin-bottom: 4px;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #EDF2F7;
+            color: #805AD5;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 9.5pt;
+        }
+        .star-box {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed #CBD5E0;
+            font-style: italic;
+            color: #4A5568;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-container">
+    <h1>ClimaX – Technical Interview Q&amp;A Guide</h1>
+    <div class="subtitle">Top 20 Medium to Advanced Interview Questions &amp; Detailed Solutions</div>
+    <div class="meta-info">Project Stack: Kotlin | MVVM | Koin DI | Retrofit | REST API | Jetpack Glance | Coroutines | SharedPreferences</div>
+</div>
+
+<!-- CATEGORY 1 -->
+<div class="category-title">Category 1: Architecture &amp; Dependency Injection (Koin &amp; MVVM)</div>
+
+<div class="question-card">
+    <div class="question-header">Q1: How does Koin perform dependency injection compared to Dagger/Hilt, and what are the performance trade-offs?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Runtime Resolution (Koin):</strong> Koin is a service locator/DI framework that resolves dependencies dynamically at runtime using Kotlin DSL definitions and Reflection/Lookups. It does not generate code at compile time.</li>
+            <li><strong>Compile-time Generation (Dagger/Hilt):</strong> Dagger/Hilt generates code at compile time using APT/KSP, providing compile-time verification of the entire dependency graph.</li>
+            <li><strong>Trade-offs:</strong>
+                <ul>
+                    <li><em>Build Time:</em> Koin leads to significantly faster build times because it avoids annotation processing overhead.</li>
+                    <li><em>Runtime Performance:</em> Dagger/Hilt is slightly faster at runtime startup because graph resolution is pre-computed. Koin has a minor startup overhead when instantiating the module registry.</li>
+                    <li><em>Safety:</em> Dagger catches missing dependencies during build time; Koin throws a runtime exception (<code>InstanceCreationException</code>) if a dependency is missing from the module registry.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q2: How do you ensure Koin dependencies don't leak context, especially when injected into a long-lived component like a GlanceAppWidget or ViewModel?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Application Context vs Activity Context:</strong> In the Koin setup module (<code>startKoin</code>), pass <code>androidContext(this)</code> initialized with the <code>Application</code> class (e.g. <code>AppConfig</code>) rather than an Activity context.</li>
+            <li><strong>ViewModel Injection:</strong> Use <code>viewModel { ... }</code> scope definitions in Koin. Koin automatically binds the ViewModel lifecycle to the Android lifecycle owner (Activity/Fragment) and clears instances when the ViewModel's <code>onCleared()</code> method is invoked.</li>
+            <li><strong>Glance Widget Isolation:</strong> Widgets obtain dependencies via the <code>KoinComponent</code> interface using lazy delegation (<code>val repo: WeatherDataRepository by inject()</code>). Because these lazy delegates access singletons or application-scoped components, they avoid binding to short-lived BroadcastReceiver contexts.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q3: If two fragments need different configurations of the same WeatherDataRepository, how would you configure Koin to handle that?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Named Definitions:</strong> Use Koin's <code>named()</code> qualifier to define multiple variants of the same type within the module:
+                <br><code>single(named("CachedRepo")) { WeatherDataRepository(get(), get()) }</code>
+                <br><code>single(named("FreshRepo")) { DirectNetworkRepository(get()) }</code>
+            </li>
+            <li><strong>Injection by Name:</strong> Inject using the matching qualifier in the consumer:
+                <br><code>val repo: WeatherDataRepository by inject(named("CachedRepo"))</code>
+            </li>
+            <li><strong>Factory Binding:</strong> If a fresh instance is needed per consumer rather than a singleton, define it with <code>factory { ... }</code> instead of <code>single { ... }</code>.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q4: How does the MVVM architecture in ClimaX prevent memory leaks during configuration changes (like screen rotation)?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>ViewModel Lifecycle:</strong> The <code>ViewModel</code> object survives configuration changes. It remains in memory while the Activity or Fragment is destroyed and recreated.</li>
+            <li><strong>Lifecycle-Aware Observers:</strong> <code>LiveData</code> observers in <code>HomeFragment</code> are bound to <code>viewLifecycleOwner</code>. When the Fragment's view is destroyed during rotation, <code>LiveData</code> automatically unregisters the observer, preventing references to dead View instances.</li>
+            <li><strong>Coroutine Cancellation:</strong> Background work launched via <code>viewModelScope</code> is tied to the ViewModel's lifecycle and gets automatically canceled when the ViewModel is destroyed (cleared).</li>
+        </ul>
+    </div>
+</div>
+
+<!-- CATEGORY 2 -->
+<div class="category-title">Category 2: Network Operations, Retrofit &amp; Asynchronous Programming</div>
+
+<div class="question-card">
+    <div class="question-header">Q5: What happens if a user repeatedly triggers SwipeRefreshLayout in HomeFragment while a network call is in progress? How do you prevent redundant API calls?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Current Behavior:</strong> If unhandled, every refresh gesture launches a new coroutine job, spawning multiple parallel HTTP requests that waste bandwidth and cause race conditions on UI state.</li>
+            <li><strong>Prevention Techniques:</strong>
+                <ul>
+                    <li><em>Active Job Reference:</em> Store the current Coroutine <code>Job</code> reference and invoke <code>fetchJob?.cancel()</code> before starting a new request.</li>
+                    <li><em>UI State Guard:</em> Check the ViewModel's loading state before firing a call: <code>if (currentUiState.isLoading) return</code>.</li>
+                    <li><em>Disable Gesture:</em> Set <code>swipeRefreshLayout.isRefreshing = true</code> and temporarily disable further swipe gestures until the active network call completes or fails.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q6: How does Retrofit work under the hood with OkHttp and Coroutines suspend functions?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Dynamic Proxy:</strong> Retrofit uses Java's <code>Proxy.newProxyInstance()</code> to generate an implementation of the <code>WeatherAPI</code> interface at runtime.</li>
+            <li><strong>OkHttp Integration:</strong> Retrofit parses annotations like <code>@GET</code> and <code>@Query</code> to construct an OkHttp <code>Call</code> object.</li>
+            <li><strong>Suspend Function Adaptation:</strong> When a function is marked <code>suspend</code>, Retrofit uses a Kotlin Coroutine CallAdapter. Under the hood, it converts OkHttp's asynchronous <code>enqueue()</code> callback into Kotlin's <code>suspendCancellableCoroutine</code>, pausing execution without thread-blocking and resuming once the HTTP response is parsed.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q7: If the Weather API responds with an HTTP 200 OK, but the JSON payload contains an internal API error code, how does Gson/Retrofit handle it, and how should your repository catch it?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Retrofit Status Check:</strong> Retrofit treats any HTTP status code in the 2xx range as a successful call (<code>response.isSuccessful == true</code>) regardless of internal JSON error flags.</li>
+            <li><strong>Gson Behavior:</strong> Gson will attempt to parse the response into the target data class. If error fields exist where weather fields were expected, non-nullable fields might become null or default-initialized.</li>
+            <li><strong>Catching Strategy:</strong>
+                <ul>
+                    <li>Define a nullable error field or status wrapper in the response model.</li>
+                    <li>In the Repository, inspect internal fields: <code>if (body.error != null) { return Result.Error(body.error.message) }</code>.</li>
+                    <li>Alternatively, register a custom <code>JsonDeserializer</code> in Gson to intercept internal error codes and throw an <code>IOException</code>.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q8: Why did you use Dispatchers.IO for the network call inside ClimaXWidget.kt, and what would happen if you ran that block using withContext(Dispatchers.Main)?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Purpose of Dispatchers.IO:</strong> <code>Dispatchers.IO</code> is backed by a shared pool of threads specifically optimized for disk and network I/O operations, preventing CPU starvation.</li>
+            <li><strong>Consequences of Main Thread Execution:</strong>
+                <ul>
+                    <li>Android strictly prohibits network calls on the main thread; executing HTTP calls on <code>Dispatchers.Main</code> triggers a <code>NetworkOnMainThreadException</code>.</li>
+                    <li>Even if network access were allowed, blocking the main thread freezes the Widget's <code>RemoteViews</code> update process, causing UI jank or ANR (Application Not Responding) dialogs across the device system server.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q9: How would you implement an offline-first mechanism using your current setup if the network is flaky?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>OkHttp Cache Interceptor:</strong> Configure an OkHttp Cache directory and add a network interceptor that returns cached responses when offline using <code>Cache-Control: public, max-stale=86400</code>.</li>
+            <li><strong>Single Source of Truth Strategy:</strong> Modify <code>WeatherDataRepository</code> to always emit data from local cache (SharedPreferences/Room) first to the UI, while asynchronously triggering a network fetch in the background to refresh local storage.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- CATEGORY 3 -->
+<div class="category-title">Category 3: Jetpack Glance, App Widgets &amp; RemoteViews</div>
+
+<div class="question-card">
+    <div class="question-header">Q10: What are the key differences and limitations when building a UI using Jetpack Glance compared to standard Jetpack Compose?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Underlying Rendering:</strong> Jetpack Compose renders directly onto a Canvas using Skia. Jetpack Glance translates Compose-like DSL code into <code>RemoteViews</code> XML structures sent across IPC to the System Launcher process.</li>
+            <li><strong>Component Restrictions:</strong> Glance only supports a strict subset of Glance-specific composables (<code>Text</code>, <code>Image</code>, <code>Column</code>, <code>Row</code>, <code>Box</code>, <code>Button</code>). Standard Compose components (like Material `Card`, `LazyColumn`, or custom Canvas drawings) are strictly unsupported.</li>
+            <li><strong>State Management:</strong> Glance uses <code>GlanceStateDefinition</code> (backed by DataStore) rather than standard Compose <code>mutableStateOf</code>.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q11: Why couldn't you use a custom TTF font directly inside Jetpack Glance Text composables, and how did embedding widget_header_clock.xml via AndroidRemoteViews bypass this limitation?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>The Problem:</strong> Widget <code>RemoteViews</code> are rendered in the System Launcher process. Custom fonts passed to Glance `Text` require font assets to be accessible by the Launcher process, which often fails or is unsupported on pre-Android 12 devices.</li>
+            <li><strong>The Solution:</strong> By using <code>AndroidRemoteViews(RemoteViews(packageName, R.layout.widget_header_clock))</code>, Android inflates the native XML layout inside the application's context. The native XML <code>TextClock</code> elements utilize system-level font resolution (<code>android:fontFamily="@font/batmfa"</code>), bypassing Glance's limited font engine while preserving high-performance automatic time updates.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q12: How does updatePeriodMillis in climax_widget_info.xml interact with Doze Mode and Android 12+ (API 31+) power optimizations?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>15-Minute Minimum:</strong> Android enforces a hard minimum update interval of 15 minutes (900,000 ms) for <code>updatePeriodMillis</code> to conserve battery. Setting <code>3600000</code> (1 hour) respects this rule.</li>
+            <li><strong>Doze Mode &amp; Throttling:</strong> When the device enters Doze Mode (idle with screen off), update broadcasts are deferred or batched into maintenance windows.</li>
+            <li><strong>Guaranteed Exact Updates:</strong> If precise background timing is required, developers must use <code>WorkManager</code> with `ExistingPeriodicWorkPolicy.KEEP` rather than relying solely on `updatePeriodMillis`.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q13: How do you ensure that TextClock inside widget_header_clock.xml updates every minute without causing battery drain or calling your background Kotlin code every minute?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Native System Execution:</strong> <code>TextClock</code> is an Android system view designed to register internal system receivers for <code>Intent.ACTION_TIME_TICK</code> directly within the System Launcher UI process.</li>
+            <li><strong>Zero App Execution:</strong> The application's Kotlin background code (or Glance widget code) is <code>NOT</code> executed every minute. The system handles string formatting and canvas re-drawing natively, resulting in zero CPU wakeups or battery drain from the app process.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- CATEGORY 4 -->
+<div class="category-title">Category 4: Complex Data Algorithms &amp; Kotlin Logic</div>
+
+<div class="question-card">
+    <div class="question-header">Q14: Walk me through the time complexity and memory overhead of your extractNextFiveHours algorithm when processing multi-day forecast lists.</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Algorithm Flow:</strong>
+                <ol>
+                    <li><code>flatMap</code> flattens 2 days of forecast hours ($2 \times 24 = 48$ elements) into a single list.</li>
+                    <li><code>filter</code> iterates through all 48 elements, parsing date strings and comparing year/day/hour against current system time.</li>
+                    <li><code>take(5)</code> takes the first 5 matching items.</li>
+                </ol>
+            </li>
+            <li><strong>Time Complexity:</strong> $O(N)$, where $N$ is the total number of forecast hours ($N = 48$). Since $N$ is constant and small, execution time is $O(1)$ in practice (&lt; 1ms).</li>
+            <li><strong>Memory Overhead:</strong> $O(N)$ auxiliary memory space created temporarily for the flattened list and filtered list before garbage collection.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q15: In extractNextFiveHours, how do you handle edge cases like time zone changes, daylight saving shifts, or device clock manipulations by the user?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Timezone Normalization:</strong> Weather API strings (e.g. <code>"2026-09-20 20:00"</code>) are formatted in local location time. Using <code>SimpleDateFormat</code> with <code>Locale.getDefault()</code> parses strings into timestamp epoch milliseconds.</li>
+            <li><strong>Daylight Savings:</strong> Epoch millisecond comparisons automatically handle DST offsets because <code>Calendar.getInstance()</code> incorporates system timezone rules.</li>
+            <li><strong>Clock Manipulation Guard:</strong> If a user sets the device clock backward/forward, the algorithm uses fallback safety logic: <code>if (filtered.size &gt;= 5) filtered.take(5) else allHours.take(5)</code>, ensuring an empty list or crash never occurs.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q16: Why did you choose List&lt;ForecastHourRemote&gt; as an immutable list instead of a mutable list inside RemoteWeatherData?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Immutability &amp; Thread Safety:</strong> Immutable lists guarantee that weather data cannot be modified concurrently across different threads (e.g. background network worker vs UI thread), eliminating <code>ConcurrentModificationException</code> risks.</li>
+            <li><strong>Functional Transformations:</strong> Operations like <code>filter</code>, <code>flatMap</code>, and <code>take</code> return new instances rather than mutating state, adhering to clean functional programming practices.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- CATEGORY 5 -->
+<div class="category-title">Category 5: State Management, Storage &amp; Scalability</div>
+
+<div class="question-card">
+    <div class="question-header">Q17: What is a LiveDataEvent (or single live event), and why is it necessary when showing Toasts or Dialogs in HomeFragment?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>The Problem (Event Re-delivery):</strong> Standard <code>LiveData</code> retains the last emitted value. When a Fragment is recreated (e.g. device rotation), the Fragment re-subscribes and receives the last emission again, triggering repetitive Toasts or Dialogs.</li>
+            <li><strong>The Solution:</strong> A <code>LiveDataEvent&lt;T&gt;</code> wrapper tracks whether the content has been handled using a boolean flag (<code>hasBeenHandled</code>). Calling <code>getContentIfNotHandled()</code> returns the data exactly once, ensuring UI events are executed once only.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q18: Why is saving complex objects as JSON strings in SharedPreferences considered an anti-pattern for large apps, and when should you migrate to Room?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Drawbacks of SharedPreferences JSON:</strong>
+                <ul>
+                    <li>Reads/writes load the entire XML file into memory synchronously on first access.</li>
+                    <li>No indexing, no relational querying, and no support for partial updates (updating 1 field re-serializes the entire JSON string).</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q19: How would you test HomeViewModel to verify that it correctly updates SharedPreferencesManager when new weather data is received?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>Testing Setup:</strong>
+                <ul>
+                    <li>Use <code>InstantTaskExecutorRule</code> to force <code>LiveData</code> architecture components to execute synchronously on the same thread.</li>
+                    <li>Replace main coroutine dispatcher using <code>Dispatchers.setMain(StandardTestDispatcher())</code>.</li>
+                    <li>Mock <code>WeatherDataRepository</code> and <code>SharedPreferencesManager</code> using MockK or Mockito.</li>
+                </ul>
+            </li>
+            <li><strong>Verification:</strong> Invoke <code>viewModel.getWeatherData(lat, lon)</code> and verify using <code>coVerify { sharedPreferencesManager.saveWeatherData(any()) }</code>.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="question-card">
+    <div class="question-header">Q20: If two different components (e.g., HomeFragment and ClimaXWidget) update SharedPreferences at the exact same time, how do you handle race conditions or data corruption?</div>
+    <div class="answer-box">
+        <strong>Detailed Solution:</strong>
+        <ul>
+            <li><strong>SharedPreferences Safety:</strong> Android's <code>SharedPreferencesImpl</code> uses in-memory locks for internal thread-safety, but writing to disk with <code>apply()</code> is asynchronous. Concurrent <code>apply()</code> calls can overwrite each other (last write wins).</li>
+            <li><strong>Robust Solution (Jetpack DataStore):</strong> Migrate from SharedPreferences to <strong>Preferences DataStore</strong>, which uses Kotlin Coroutines and <code>Flow</code>. DataStore handles transactional, thread-safe updates backed by a Mutex, preventing concurrent write corruption across app components.</li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>

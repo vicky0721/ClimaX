@@ -1,8 +1,12 @@
 package com.example.climax.fragments.home
 
 import android.annotation.SuppressLint
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.climax.data.CurrentLocation
@@ -12,6 +16,8 @@ import com.example.climax.data.WeatherData
 import com.example.climax.databinding.ItemContainerCurrentLocationBinding
 import com.example.climax.databinding.ItemContainerCurrentWeatherBinding
 import com.example.climax.databinding.ItemContainerForecastBinding
+import com.example.climax.widget.ClimaXWidgetReceiver
+import java.util.Locale
 
 class WeatherDataAdapter(
     private val onLocationClicked: () -> Unit
@@ -125,10 +131,31 @@ class WeatherDataAdapter(
                 imageIcon.load("https:${currentWeather.icon}") {
                     crossfade(true)
                 }
-                textTemperature.text = String.format("%s\u00B0C", currentWeather.temperature)
-                textWind.text = String.format("%s km/h", currentWeather.wind)
-                textHumidity.text = String.format("%s%%", currentWeather.humidity)
-                textChanceOfRain.text = String.format("%s%%", currentWeather.chanceOfRain)
+                textTemperature.text = String.format(Locale.US, "%.2f\u00B0C", currentWeather.temperature)
+                textWind.text = String.format(Locale.US, "%.1f km/h", currentWeather.wind)
+                textHumidity.text = String.format(Locale.US, "%d%%", currentWeather.humidity)
+                textChanceOfRain.text = String.format(Locale.US, "%d%%", currentWeather.chanceOfRain)
+
+                WidgetBtn.setOnClickListener {
+                    val context = itemView.context
+                    val appWidgetManager = AppWidgetManager.getInstance(context)
+                    val myProvider = ComponentName(context, ClimaXWidgetReceiver::class.java)
+
+                    val appWidgetIds = appWidgetManager.getAppWidgetIds(myProvider)
+                    if (appWidgetIds.isNotEmpty()) {
+                        Toast.makeText(context, "widget is already added on homescreen", Toast.LENGTH_SHORT).show()
+                    } else {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                                appWidgetManager.requestPinAppWidget(myProvider, null, null)
+                            } else {
+                                Toast.makeText(context, "Pinning widget is not supported on this launcher", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "Please add the widget manually from your home screen menu", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
             }
         }
     }
@@ -140,9 +167,9 @@ class WeatherDataAdapter(
         fun bind(forecast: Forecast) {
             with(binding) {
                 textTime.text = forecast.time
-                textTemperature.text = String.format("%s\u00B0C", forecast.temperature)
+                textTemperature.text = String.format(Locale.US, "%.2f\u00B0C", forecast.temperature)
                 textFeelsLikeTemperature.text =
-                    String.format("%s\u00B0C", forecast.feelsLikeTemperature)
+                    String.format(Locale.US, "%.2f\u00B0C", forecast.feelsLikeTemperature)
 
                 imageIcon.load("https:${forecast.icon}") {
                     crossfade(true)
